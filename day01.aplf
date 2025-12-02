@@ -1,5 +1,4 @@
-⍝ Advent of Code 2025 - Day 01
-⍝ Secret Entrance - Safe Dial Rotation
+⍝ AoC 2025 - Day 01 - Secret Entrance - Safe Dial Rotation
 
 ⍝ Read input file
 input ← ⊃⎕NGET '2025/data/inputs/01.txt' 1
@@ -7,28 +6,21 @@ example ← ⊃⎕NGET '2025/data/examples/01.txt' 1
 
 ⍝ Parse a rotation instruction (e.g., "L68" or "R48")
 ⍝ Returns signed distance: negative for L, positive for R
-ParseRotation ← {(¯1+2×'R'=⊃⍵)×⍎1↓⍵}
+ParseRotation ← (¯1+2×'R'=⊃)×⍎∘(1∘↓)
 
 ⍝ Apply a rotation to current position (wraps at 0-99)
-Rotate ← {100|⍺+⍵}
+Rotate ← 100∘|+
 
 ⍝ Count zeros crossed during a rotation (for Part 2)
 ⍝ Takes current position and signed distance
-CountZeroCrossings ← {+/0=100|⍺+(×⍵)×⍳|⍵}
+CountZeroCrossings ← {+/0=100|⍺+(×⍵)×⍳|⍵}  ⍝ Keeping dfn - tacit version complex
 
 ⍝ Part 1: Count times dial points at 0 AFTER rotations
-Part1 ← {
-    ⍝ Scan rotations from position 50, count zeros
-    +/0=1↓Rotate\50,ParseRotation¨⍵
-}
+⍝ Scan rotations from position 50, count zeros
+Part1 ← { +/0=1↓Rotate\50,ParseRotation¨⍵ }
 
 ⍝ Part 2: Count all times dial points at 0 (during + after)
-Part2 ← {
-    rotations ← ParseRotation¨⍵
-    allpos ← Rotate\50,rotations
-    ⍝ Count zeros during rotations + zeros at end of rotations
-    +/((¯1↓allpos)CountZeroCrossings¨rotations)+(0=1↓allpos)
-}
+Part2 ← {r←ParseRotation¨⍵ ⋄ +/(¯1↓Rotate\50,r)CountZeroCrossings¨r}
 
 ⍝ Test with example input
 ⎕← 'Part 1 Example: ',⍕Part1 example
