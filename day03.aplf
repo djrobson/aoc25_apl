@@ -3,12 +3,12 @@
 ⍝ For each bank (row), find the maximum N-digit number
 ⍝ by choosing N digits in order using greedy selection
 GreedySelect ← {
-    n data pos ← ⍺ ⍵ 0
+    n data pos len ← ⍺ ⍵ 0 (≢⍵)
     digits ← {
-        end ← (≢data) - (n - ⍵)                ⍝ Leave room for remaining picks
-        window ← pos↓end↑data                  ⍝ Slice: drop first pos, take first end
-        pos ⊢← pos + window⍳⌈/window           ⍝ Move position past the max
-        ⌈/window                                ⍝ Return max value
+        window ← pos↓(len-(n-⍵))↑data          ⍝ Slice: drop first pos, take up to end
+        m ← ⌈/window                            ⍝ Compute max once
+        pos ⊢← pos + window⍳m                   ⍝ Move position past the max
+        m                                       ⍝ Return max value
     }¨⍳n
     10⊥digits
 }
