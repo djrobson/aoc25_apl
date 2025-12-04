@@ -1,0 +1,54 @@
+⍝ AoC 2025 - Day 04 - Printing Department
+
+⍝ Read input as character grid with padding
+ParseInput ← {
+    raw ← ↑⊃⎕NGET ⍵ 1
+    ⍝ Pad grid with border of '.' to avoid bounds checking
+    cols ← 2+1⊃⍴raw
+    bordered ← (1,cols)⍴'.'
+    bordered ⍪← ('.',raw,'.')
+    bordered ⍪← (1,cols)⍴'.'
+    bordered
+}
+
+⍝ Count @ neighbors for all positions at once using vectorized operations
+CountAllNeighbors ← {
+    n ← '@'=⍵
+    (¯1⌽¯1⊖n)+(¯1⊖n)+(1⌽¯1⊖n)+(¯1⌽n)+(1⌽n)+(¯1⌽1⊖n)+(1⊖n)+(1⌽1⊖n)
+}
+
+⍝ Part 1: Count initially accessible rolls
+Part1 ← {
+    neighborCounts ← CountAllNeighbors ⍵
+    +/,('@'=⍵)∧(neighborCounts<4)
+}
+
+⍝ Part 2: Iteratively remove accessible rolls until none remain
+Part2 ← {
+    grid ← ⍵  ⍝ Single copy at start
+    total ← 0
+    {
+        rolls ← '@'=grid
+        0=+/,rolls: total  ⍝ No rolls left
+        neighborCounts ← CountAllNeighbors grid
+        accessible ← rolls∧(neighborCounts<4)
+        numAccessible ← +/,accessible
+        0=numAccessible: total
+        grid[⍸accessible] ← '.'  ⍝ Modify in place
+        total +← numAccessible
+        ∇ ⍬
+    }⍬
+}
+
+⍝ Read input files
+input ← ParseInput '2025/data/inputs/04.txt'
+example ← ParseInput '2025/data/examples/04.txt'
+
+⎕PP←17
+⍝ Test with example input
+⎕← 'Part 1 Example: ',⍕Part1 example ⍝ should be 13
+⎕← 'Part 2 Example: ',⍕Part2 example ⍝ should be 43
+
+⍝ Run on actual input
+⎕← 'Part 1: ',⍕Part1 input  ⍝ should be 1363
+⎕← 'Part 2: ',⍕Part2 input  ⍝ should be 8184

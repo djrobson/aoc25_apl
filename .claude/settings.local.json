@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(dyalog:*)",
+      "Bash(timeout 120 dyalog:*)",
+      "Bash(timeout 180 dyalog -script day02.aplf)",
+      "Bash(timeout:*)",
+      "Bash(powershell:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
