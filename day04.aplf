@@ -1,0 +1,59 @@
+⍝ AoC 2025 - Day 04 - Printing Department
+
+⍝ Read input as character grid
+ParseInput ← {↑⊃⎕NGET ⍵ 1}
+
+⍝ Count @ neighbors for a position [r,c] in grid
+CountNeighbors ← {
+    grid pos ← ⍺ ⍵
+    rows cols ← ⍴grid
+    r ← ⊃pos
+    c ← ⊃⌽pos
+    ⍝ Count neighbors with bounds checking - check all 8 explicitly
+    offsets ← (¯1 ¯1)(¯1 0)(¯1 1)(0 ¯1)(0 1)(1 ¯1)(1 0)(1 1)
+    +/{
+        dr ← ⊃⍵
+        dc ← ⊃⌽⍵
+        nr ← ⊃r+dr
+        nc ← ⊃c+dc
+        ~(nr≥1)∧(nr≤rows)∧(nc≥1)∧(nc≤cols):0 ⋄ '@'=grid[nr;nc]
+    }¨offsets
+}
+
+⍝ Part 1: Count initially accessible rolls
+Part1 ← {
+    grid ← ⍵
+    rolls ← ⍸grid='@'  ⍝ Returns vector of 2-element vectors
+    counts ← grid∘CountNeighbors¨rolls
+    +/counts<4
+}
+
+⍝ Part 2: Iteratively remove accessible rolls until none remain
+Part2 ← {
+    grid ← ⍵
+    total ← 0
+    {
+        rolls ← ⍸⍵='@'  ⍝ Returns vector of 2-element vectors
+        0=≢rolls: total
+        counts ← ⍵∘CountNeighbors¨rolls
+        accessible ← counts<4
+        0=+/accessible: total
+        newGrid ← ⍵
+        newGrid[accessible/rolls] ← '.'
+        total +← +/accessible
+        ∇ newGrid
+    }⍵
+}
+
+⍝ Read input files
+input ← ParseInput '2025/data/inputs/04.txt'
+example ← ParseInput '2025/data/examples/04.txt'
+
+⎕PP←17
+⍝ Test with example input
+⎕← 'Part 1 Example: ',⍕Part1 example ⍝ should be 13
+⎕← 'Part 2 Example: ',⍕Part2 example ⍝ should be 43
+
+⍝ Run on actual input
+⎕← 'Part 1: ',⍕Part1 input  ⍝ should be 1363
+⎕← 'Part 2: ',⍕Part2 input  ⍝ should be 8184
