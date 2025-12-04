@@ -10,7 +10,7 @@ CountAllNeighbors←{(¯1⌽¯1⊖⍵)+(¯1⊖⍵)+(1⌽¯1⊖⍵)+(¯1⌽⍵)+(
 Part1←{+/,⍵∧4>CountAllNeighbors ⍵}
 
 ⍝ Part 2: Iteratively remove accessible rolls until none remain
-Part2←{g←⍵ ⋄ t←0 ⋄ {0=+/,g:t ⋄ a←g∧4>CountAllNeighbors g ⋄ n←+/,a ⋄ 0=n:t ⋄ g[⍸a]←0 ⋄ t+←n ⋄ ∇⍬}⍬}
+Part2←{+/,⍵-{g←⍵ ⋄ a←g∧4>CountAllNeighbors g ⋄ g[⍸a]←0 ⋄ g}⍣≡⍵}
 
 ⍝ Read input files
 input←ParseInput'2025/data/inputs/04.txt'
