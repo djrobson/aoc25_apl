@@ -2,31 +2,27 @@
 
 ⍝ For each bank (row), find the maximum N-digit number
 ⍝ by choosing N digits in order using greedy selection
-∇ result ← n GreedySelect bankNum
-    ⍝ Greedy selection: pick n digits with maximum values in order
-    len pos ← (≢bankNum) 0
+GreedySelect ← {
+    n data pos ← ⍺ ⍵ 0
     digits ← {
-        end ← len - (n - ⍵)                    ⍝ Leave room for remaining picks
-        window ← pos↓end↑bankNum               ⍝ Slice: drop first pos, take first end
-        max ← ⌈/window                         ⍝ Find max value
-        pos ⊢← pos + window⍳max                ⍝ Move position past the max
-        max
+        end ← (≢data) - (n - ⍵)                ⍝ Leave room for remaining picks
+        window ← pos↓end↑data                  ⍝ Slice: drop first pos, take first end
+        pos ⊢← pos + window⍳⌈/window           ⍝ Move position past the max
+        ⌈/window                                ⍝ Return max value
     }¨⍳n
-    result ← 10⊥digits
-∇
+    10⊥digits
+}
 
-⍝ Parse input as 2D matrix of digits (convert once, not per line)
-ParseInput ← {⍎¨↑⍵}
+⍝ Read and parse input as 2D matrix of digits
+ReadInput ← {⍎¨↑⊃⎕NGET ⍵ 1}
 
-Part1 ← {+/2∘GreedySelect¨↓⍵}   ⍝ Sum of max 2-digit numbers from each bank
+⍝ Sum of max N-digit numbers from each bank (tacit style)
+Part1 ← +/∘(2∘GreedySelect¨)∘↓
+Part2 ← +/∘(12∘GreedySelect¨)∘↓
 
-⍝ Part2 can be parallelized in a REPL session with: {+/{⍵}¨12∘GreedySelect&¨↓⍵}
-⍝ For now, use sequential execution (& isolate doesn't work in script mode)
-Part2 ← {+/12∘GreedySelect¨↓⍵}  ⍝ Sum of max 12-digit numbers from each bank
-
-⍝ Read and parse input files
-input ← ParseInput⊃⎕NGET '2025/data/inputs/03.txt' 1
-example ← ParseInput⊃⎕NGET '2025/data/examples/03.txt' 1
+⍝ Read input files
+input ← ReadInput '2025/data/inputs/03.txt'
+example ← ReadInput '2025/data/examples/03.txt'
 
 ⎕PP←17
 ⍝ Test with example input
