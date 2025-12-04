@@ -7,7 +7,7 @@ ParseInput←{r←'@'=↑⊃⎕NGET ⍵ 1 ⋄ c←2+1⊃⍴r ⋄ b←(1,c)⍴0 �
 CountAllNeighbors←{(¯1⌽¯1⊖⍵)+(¯1⊖⍵)+(1⌽¯1⊖⍵)+(¯1⌽⍵)+(1⌽⍵)+(¯1⌽1⊖⍵)+(1⊖⍵)+(1⌽1⊖⍵)}
 
 ⍝ Find accessible rolls (with <4 neighbors)
-Accessible←{⍵∧4>CountAllNeighbors ⍵}
+Accessible←⊢∧4∘>∘CountAllNeighbors
 
 ⍝ Remove accessible rolls once
 RemoveAccessible←{0@(⍸Accessible ⍵)⊢⍵}
@@ -16,7 +16,7 @@ RemoveAccessible←{0@(⍸Accessible ⍵)⊢⍵}
 Part1←+/∘,∘Accessible
 
 ⍝ Part 2: Iteratively remove accessible rolls until none remain
-Part2←{+/,⍵-RemoveAccessible⍣≡⍵}
+Part2←+/∘,∘(⊢-RemoveAccessible⍣≡)
 
 ⍝ Read input files
 input←ParseInput'2025/data/inputs/04.txt'
