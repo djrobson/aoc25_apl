@@ -1,0 +1,44 @@
+⍝ AoC 2025 - Day 03 - lobby
+
+⍝ For each bank (row), find the maximum N-digit number
+⍝ by choosing N digits in order using greedy selection
+∇ result ← n MaxJoltage bankNum
+    len ← ≢bankNum
+
+    ⍝ Helper that returns digit and updates start (side effect via assignment)
+    ⍝ Map over each selection index
+    start ← 1
+    digits ← {
+        end ← len - (n - ⍵)
+        indices ← (start-1) + ⍳0⌈((end-start)+1)
+        candidates ← bankNum[indices]
+        maxDigit ← ⌈/candidates
+        offset ← candidates⍳maxDigit
+        pos ← indices[offset]
+        start ⊢← pos + 1  ⍝ Update start for next iteration
+        maxDigit
+    }¨⍳n
+
+    result ← 10⊥digits
+∇
+
+⍝ Parse input as 2D matrix of digits (convert once, not per line)
+ParseInput ← {⍎¨↑⍵}
+
+Part1 ← {+/2∘MaxJoltage¨↓⍵}  ⍝ Sum of max 2-digit numbers from each bank
+
+Part2 ← {+/12∘MaxJoltage¨↓⍵} ⍝ Sum of max 12-digit numbers from each bank
+
+⍝ Read and parse input files
+input ← ParseInput⊃⎕NGET '2025/data/inputs/03.txt' 1
+example ← ParseInput⊃⎕NGET '2025/data/examples/03.txt' 1
+
+⎕PP←17
+⍝ Test with example input
+⎕← 'Part 1 Example: ',⍕Part1 example ⍝ should be 357
+⎕← 'Part 2 Example: ',⍕Part2 example ⍝ should be 3121910778619
+
+⍝ Run on actual input
+⎕← 'Part 1: ',⍕Part1 input  ⍝ should be 17095
+⎕← 'Computing Part 2 (this may take a minute)...'
+⎕← 'Part 2: ',⍕Part2 input  ⍝ should be 168794698570517
