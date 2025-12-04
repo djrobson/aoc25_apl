@@ -1,0 +1,131 @@
+⍝ AoC 2025 - Day 02 - Gift Shop
+
+⍝ Parse a comma-separated list of ranges like "11-22,95-115,998-1012"
+⍝ Returns a 2×N array where each column is [start,end]
+ParseRanges ← {
+    input ← ⍵
+    ⍝ Replace - with space, replace , with space
+    cleaned ← {('-'=⍵)∨','=⍵:' ' ⋄ ⍵}¨input
+    nums ← ⊃(⎕VFI cleaned)[2]  ⍝ Convert to numbers using VFI
+    ⍉((≢nums)÷2) 2⍴nums  ⍝ Reshape to N×2 matrix, then transpose to 2×N
+}
+
+⍝ Check if a number is a pattern repeated exactly twice (e.g., 11, 1010, 123123)
+⍝ Works by checking if the string equals itself when split in half and compared
+IsDoubled ← {s←⍕⍵ ⋄ 0=2|≢s:((2÷⍨≢s)↑s)≡(2÷⍨≢s)↓s ⋄ 0}
+
+⍝ Find all doubled-pattern numbers in a range [start,end]
+⍝ Takes a 2-element vector [start,end]
+⍝ Generates only base patterns that will produce doubled numbers within range
+FindDoubled ← {
+    start end←⍵
+    minDigits←≢⍕start
+    maxDigits←≢⍕end
+    ⍝ Only consider pattern lengths that produce numbers with the right digit count
+    candidates←∊{
+        patLen←⍵
+        ⍝ Doubled pattern produces 2×patLen digits
+        numDigits←2×patLen
+        numDigits<minDigits:⍬  ⍝ Too few digits
+        numDigits>maxDigits:⍬  ⍝ Too many digits
+
+        ⍝ Calculate range of base patterns that produce valid doubled numbers
+        ⍝ Formula: doubled = base × (1 + 10^patLen)
+        mult←1+10*patLen
+        minBase←⌈(start-1)÷mult          ⍝ Min base to reach start
+        maxBase←⌊end÷mult                ⍝ Max base to not exceed end
+
+        ⍝ Base must have exactly patLen digits (no leading zeros)
+        minValidBase←10*patLen-1         ⍝ Smallest patLen-digit number
+        maxValidBase←(10*patLen)-1       ⍝ Largest patLen-digit number
+        minBase←minBase⌈minValidBase     ⍝ Take max of calculated and valid minimum
+        maxBase←maxBase⌊maxValidBase     ⍝ Take min of calculated and valid maximum
+        minBase>maxBase:⍬                ⍝ No valid bases for this length
+
+        base←(minBase-1)+⍳1+maxBase-minBase
+        doubled←base×mult
+        doubled/⍨(doubled≥start)∧doubled≤end
+    }¨⍳maxDigits
+    +/candidates
+}
+
+⍝ Part 1: Sum all invalid IDs (doubled patterns) across all ranges
+⍝ Input is a 2×N matrix where each column is [start,end]
+Part1 ← {+/FindDoubled¨↓⍉⍵}
+
+⍝ Check if a number is a pattern repeated at least twice (e.g., 111, 1010, 123123, 12341234)
+⍝ Works by trying all possible pattern lengths from 1 to half the string length
+IsRepeating ← {
+    s←⍕⍵
+    len←≢s
+    len≤1:0  ⍝ Single digit numbers cannot repeat
+    ∨/{
+        patLen←⍵
+        patLen=0:0  ⍝ Guard against zero
+        0≠len|⍨patLen:0  ⍝ Pattern length must divide string length evenly
+        reps←len÷patLen
+        reps<2:0  ⍝ Need at least 2 repetitions
+        ⍝ Reshape string into matrix where each row is one repetition
+        ⍝ Check if all rows are identical
+        mat←(reps,patLen)⍴s
+        pattern←patLen↑s
+        ∧/pattern∘≡¨↓mat
+    }¨⍳⌊len÷2
+}
+
+⍝ Find all repeating-pattern numbers in a range [start,end]
+⍝ Takes a 2-element vector [start,end]
+⍝ Generates only base patterns that will produce repeating numbers within range
+FindRepeating ← {
+    start end←⍵
+    minDigits←≢⍕start
+    maxDigits←≢⍕end
+    candidates←∊{
+        patLen←⍵
+        maxReps←⌈maxDigits÷patLen  ⍝ Maximum possible repetitions
+        ∊{
+            reps←⍵
+            ⍝ Repeated pattern produces reps×patLen digits
+            numDigits←reps×patLen
+            numDigits<minDigits:⍬  ⍝ Too few digits
+            numDigits>maxDigits:⍬  ⍝ Too many digits
+
+            ⍝ Calculate multiplier for this repetition pattern
+            ⍝ Example: 123123 = 123 × (10³ + 1) = 123 × 1001
+            mult←+/10*(patLen×⍳reps)-patLen
+
+            ⍝ Calculate range of base patterns that produce valid numbers
+            minBase←⌈(start-1)÷mult          ⍝ Min base to reach start
+            maxBase←⌊end÷mult                ⍝ Max base to not exceed end
+
+            ⍝ Base must have exactly patLen digits (no leading zeros)
+            minValidBase←10*patLen-1         ⍝ Smallest patLen-digit number
+            maxValidBase←(10*patLen)-1       ⍝ Largest patLen-digit number
+            minBase←minBase⌈minValidBase     ⍝ Take max of calculated and valid minimum
+            maxBase←maxBase⌊maxValidBase     ⍝ Take min of calculated and valid maximum
+            minBase>maxBase:⍬                ⍝ No valid bases for this length/reps
+
+            base←(minBase-1)+⍳1+maxBase-minBase
+            repeated←base×mult
+            repeated/⍨(repeated≥start)∧repeated≤end
+        }¨1+⍳maxReps-1  ⍝ reps from 2 to maxReps
+    }¨⍳maxDigits
+    +/∪candidates  ⍝ Remove duplicates before summing
+}
+
+⍝ Part 2: Sum all invalid IDs (any repeating patterns) across all ranges
+⍝ Input is a 2×N matrix where each column is [start,end]
+Part2 ← {+/FindRepeating¨↓⍉⍵}
+
+⍝ Read and parse input files
+input ← ParseRanges⊃⊃⎕NGET '2025/data/inputs/02.txt' 1
+example ← ParseRanges⊃⊃⎕NGET '2025/data/examples/02.txt' 1
+
+⍝ Test with example input
+⎕PP←17  ⍝ Set print precision to show full numbers
+⎕← 'Part 1 Example: ',⍕Part1 example
+⎕← 'Part 2 Example: ',⍕Part2 example
+
+⍝ Run on actual input
+⎕← 'Part 1: ',⍕Part1 input
+⎕← 'Part 2: ',⍕Part2 input
