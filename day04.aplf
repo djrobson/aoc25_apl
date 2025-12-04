@@ -1,16 +1,16 @@
 ⍝ AoC 2025 - Day 04 - Printing Department
 
-⍝ Read input as character grid with padding
-ParseInput←{r←↑⊃⎕NGET ⍵ 1 ⋄ c←2+1⊃⍴r ⋄ b←(1,c)⍴'.' ⋄ b⍪←('.',r,'.') ⋄ b⍪(1,c)⍴'.'}
+⍝ Read input as numeric grid with padding (1=@, 0=.)
+ParseInput←{r←'@'=↑⊃⎕NGET ⍵ 1 ⋄ c←2+1⊃⍴r ⋄ b←(1,c)⍴0 ⋄ b⍪←(0,r,0) ⋄ b⍪(1,c)⍴0}
 
-⍝ Count @ neighbors for all positions at once
-CountAllNeighbors←{n←'@'=⍵ ⋄ (¯1⌽¯1⊖n)+(¯1⊖n)+(1⌽¯1⊖n)+(¯1⌽n)+(1⌽n)+(¯1⌽1⊖n)+(1⊖n)+(1⌽1⊖n)}
+⍝ Count neighbors for all positions at once
+CountAllNeighbors←{(¯1⌽¯1⊖⍵)+(¯1⊖⍵)+(1⌽¯1⊖⍵)+(¯1⌽⍵)+(1⌽⍵)+(¯1⌽1⊖⍵)+(1⊖⍵)+(1⌽1⊖⍵)}
 
 ⍝ Part 1: Count initially accessible rolls
-Part1←{+/,('@'=⍵)∧4>CountAllNeighbors ⍵}
+Part1←{+/,⍵∧4>CountAllNeighbors ⍵}
 
 ⍝ Part 2: Iteratively remove accessible rolls until none remain
-Part2←{g←⍵ ⋄ t←0 ⋄ {r←'@'=g ⋄ 0=+/,r:t ⋄ a←r∧4>CountAllNeighbors g ⋄ n←+/,a ⋄ 0=n:t ⋄ g[⍸a]←'.' ⋄ t+←n ⋄ ∇⍬}⍬}
+Part2←{g←⍵ ⋄ t←0 ⋄ {0=+/,g:t ⋄ a←g∧4>CountAllNeighbors g ⋄ n←+/,a ⋄ 0=n:t ⋄ g[⍸a]←0 ⋄ t+←n ⋄ ∇⍬}⍬}
 
 ⍝ Read input files
 input←ParseInput'2025/data/inputs/04.txt'
