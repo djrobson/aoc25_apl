@@ -3,9 +3,10 @@
 ⎕CT←0  ⍝ Use exact comparison (no tolerance) for large integers
 
 ParseInput←{
-    lines←{(0<≢¨⍵)⊆⍵}⊃⎕NGET ⍵ 1  ⍝ Read and partition by non-empty lines
+    lines←((0<≢¨)⊆⊢)⊃⎕NGET ⍵ 1  ⍝ Read and partition by non-empty lines
     ranges←↑{⍎' '@(⍸⍵='-')⊢⍵}¨⊃lines  ⍝ Parse ranges: replace '-' with ' ' and execute
-    (ranges)(⍎¨⊃⌽lines)  ⍝ Return ranges and parsed IDs
+    sorted←ranges[⍋ranges[;1];]  ⍝ Pre-sort by start position
+    (sorted)(⍎¨⊃⌽lines)  ⍝ Return sorted ranges and parsed IDs
 }
 
 Part1←{
@@ -14,19 +15,13 @@ Part1←{
 }
 
 Part2←{
-    r←⊃⍵
-    sorted←r[⍋r[;1];]
-
     Merge←{
         1≥⊃⍴⍵:⍵
         s e←⍵[1;] ⋄ ns ne←⍵[2;]
         ns>e:(1 2⍴s,e)⍪∇1↓⍵  ⍝ No overlap - keep separate
-        2=⊃⍴⍵:1 2⍴s(e⌈ne)  ⍝ Last two - merge
         ∇(1 2⍴s(e⌈ne))⍪2↓⍵  ⍝ Merge and continue
     }
-
-    merged←Merge sorted
-    +/{1+⍵[2]-⍵[1]}¨↓merged
+    +/1--⌿⍉Merge⊃⍵
 }
 
 example←ParseInput'2025/data/examples/05.txt'
@@ -37,3 +32,4 @@ input←ParseInput'2025/data/inputs/05.txt'
 ⎕←'Part 2 Example: ',⍕Part2 example ⍝ should be 14
 ⎕←'Part 1 input: ',⍕Part1 input  ⍝ should be 652
 ⎕←'Part 2 input : ',⍕Part2 input  ⍝ should be 341753674214273
+⎕←'Done'
