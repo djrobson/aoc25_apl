@@ -4,9 +4,7 @@
 
 ParseInput←{
     lines←((0<≢¨)⊆⊢)⊃⎕NGET ⍵ 1  ⍝ Read and partition by non-empty lines
-    ranges←↑{⍎' '@(⍸⍵='-')⊢⍵}¨⊃lines  ⍝ Parse ranges: replace '-' with ' ' and execute
-    sorted←ranges[⍋ranges[;1];]  ⍝ Pre-sort by start position
-    (sorted)(⍎¨⊃⌽lines)  ⍝ Return sorted ranges and parsed IDs
+    ({⍵[⍋⍵[;1];]}↑{⍎' '@(⍸⍵='-')⊢⍵}¨⊃lines)(⍎¨⊃⌽lines)  ⍝ Parse, sort, and return with IDs
 }
 
 Part1←{
