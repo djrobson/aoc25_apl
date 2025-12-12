@@ -24,27 +24,15 @@
     parts ← result
 ∇
 
-⍝ Parse a single line
-∇ result ← ParseLine line;filtered;parts;target;buttons;i;nums
-    ⍝ Filter out brackets
-    filtered ← (~line∊'[](){}')/line
-
-    ⍝ Split on space
+⍝ Parse a single line (dfn using tradfn helper)
+ParseLine ← {
+    filtered ← (~⍵∊'[](){}')/⍵
     parts ← ' 'SplitChar filtered
-
-    ⍝ First → boolean
     target ← '#'=⊃parts
-
-    ⍝ Middle → buttons (split on comma)
-    buttons ← ⍬
-    :For i :In 1+⍳(≢parts)-2
-        nums ← ⍎¨','SplitChar⊃parts[i]
-        buttons ← buttons,⊂nums
-    :EndFor
-
-    ⍝ Last → joltages
-    result ← target buttons (⍎¨','SplitChar⊃⌽parts)
-∇
+    buttons ← {⍎¨','SplitChar⍵}¨⊃¨1↓¯1↓parts
+    joltages ← ⍎¨','SplitChar⊃⌽parts
+    target buttons joltages
+}
 
 ⍝ Part 1: Try all 2^n combinations and find minimal
 SolvePart1 ← {
