@@ -1,0 +1,225 @@
+⍝ Day 10: Factory - Simpler approach
+⍝ Part 1: Brute force search for toggle problem
+⍝ Part 2: Use APL's matrix inverse
+
+⎕IO←0  ⍝ Use 0-based indexing to match puzzle description
+
+⍝ Helper: Split string on a character
+∇ parts ← ch SplitChar str;result;word;i
+    result ← ⍬
+    word ← ''
+    :For i :In ⍳≢str
+        :If str[i]=ch
+            :If 0<≢word
+                result ← result,⊂word
+                word ← ''
+            :EndIf
+        :Else
+            word ← word,str[i]
+        :EndIf
+    :EndFor
+    :If 0<≢word
+        result ← result,⊂word
+    :EndIf
+    parts ← result
+∇
+
+⍝ Parse a single line
+∇ result ← ParseLine line;filtered;parts;target;buttons;i;nums
+    ⍝ Filter out brackets
+    filtered ← (~line∊'[](){}')/line
+
+    ⍝ Split on space
+    parts ← ' 'SplitChar filtered
+
+    ⍝ First → boolean
+    target ← '#'=⊃parts
+
+    ⍝ Middle → buttons (split on comma)
+    buttons ← ⍬
+    :For i :In 1+⍳(≢parts)-2
+        nums ← ⍎¨','SplitChar⊃parts[i]
+        buttons ← buttons,⊂nums
+    :EndFor
+
+    ⍝ Last → joltages
+    result ← target buttons (⍎¨','SplitChar⊃⌽parts)
+∇
+
+⍝ Part 1: Try all 2^n combinations and find minimal
+SolvePart1 ← {
+    (target buttons joltages) ← ⍵
+    nLights ← ≢target
+    nButtons ← ≢buttons
+
+    ⍝ Build matrix
+    matrix ← ⍉↑{vec ← nLights⍴0 ⋄ vec[⍵]←1 ⋄ vec}¨buttons
+
+    ⍝ Generate all possible button press combinations
+    ⍝ Each column is a different combination
+    combos ← (nButtons/2)⊤⍳2*nButtons
+
+    ⍝ For each combo, compute result using matrix multiplication mod 2
+    ⍝ results[:,j] = matrix +.× combos[:,j]
+    results ← 2|matrix+.×combos
+
+    ⍝ Find which columns match target
+    matches ← target≡⍤1⊢⍉results
+
+    ⍝ Find minimal weight
+    ~∨/matches : ¯1
+    weights ← +⌿combos
+    ⊃⌊/matches/weights
+}
+
+⍝ Gaussian elimination to reduced row echelon form
+∇ rref ← RREF aug;m;n;lead;r;i;lv;temp;j
+    m ← ⊃⍴aug
+    n ← ⊃⌽⍴aug
+    lead ← 0
+    :For r :In ⍳m
+        :If lead≥n
+            :Leave
+        :EndIf
+        i ← r
+        :While (i<m)∧(aug[i;lead]=0)
+            i ← i+1
+            :If i≥m
+                i ← r
+                lead ← lead+1
+                :If lead≥n
+                    :Leave
+                :EndIf
+            :EndIf
+        :EndWhile
+        :If lead<n
+            ⍝ Check if valid pivot found
+            :If (i<m)∧(aug[i;lead]≠0)
+                ⍝ Swap rows
+                :If i≠r
+                    temp ← aug[i;]
+                    aug[i;] ← aug[r;]
+                    aug[r;] ← temp
+                :EndIf
+                ⍝ Scale pivot to 1
+                aug[r;] ← aug[r;]÷aug[r;lead]
+                ⍝ Eliminate column
+                :For j :In ⍳m
+                    :If j≠r
+                        aug[j;] ← aug[j;]-aug[j;lead]×aug[r;]
+                    :EndIf
+                :EndFor
+            :EndIf
+            lead ← lead+1
+        :EndIf
+    :EndFor
+    rref ← aug
+∇
+
+⍝ Part 2: Solve using Gaussian elimination + brute force free variables
+∇ minSum ← SolvePart2 data;target;buttons;joltages;nCounters;nButtons;matrix;aug;rref;pivotCols;row;nonZero;freeCols;MT;approx;maxFree;nFree;limit;combo;freeVals;solution;valid;pivotCol;rhs;otherTerms;basicVal;result;sum
+    (target buttons joltages) ← data
+    nCounters ← ≢joltages
+    nButtons ← ≢buttons
+
+    ⍝ Build matrix: each row is a counter equation, each column is a button variable
+    matrix ← ⍉↑{vec ← nCounters⍴0 ⋄ vec[⍵]←1 ⋄ vec}¨buttons
+
+    ⍝ Augmented matrix [A|b]
+    aug ← matrix,⍪joltages
+
+    ⍝ Reduce to RREF
+    rref ← RREF aug
+
+    ⍝ Identify pivot columns (basic variables) and free columns
+    pivotCols ← ⍬
+    :For row :In ⍳nCounters
+        nonZero ← ⍸rref[row;⍳nButtons]≠0
+        :If 0<≢nonZero
+            pivotCols ← pivotCols,⊃nonZero
+        :EndIf
+    :EndFor
+    freeCols ← (~(⍳nButtons)∊pivotCols)/⍳nButtons
+
+    ⎕←'nButtons: ',⍕nButtons
+    ⎕←'nCounters: ',⍕nCounters
+    ⎕←'pivotCols: ',⍕pivotCols
+    ⎕←'freeCols: ',⍕freeCols
+
+    ⍝ Upper bound for search: use max joltage as upper bound
+    maxFree ← ⌈/joltages
+
+    ⎕←'maxFree: ',⍕maxFree
+
+    ⍝ Brute force search over free variables
+    nFree ← ≢freeCols
+    minSum ← 999999
+    validCount ← 0
+    matchCount ← 0
+
+    ⍝ Generate all combinations of free variables
+    :If nFree=0
+        ⍝ No free variables - solution is determined
+        solution ← rref[;nButtons]
+        minSum ← +/solution
+    :Else
+        ⍝ Try all combinations up to maxFree for each free variable
+        limit ← maxFree+1
+        :For combo :In ⍳limit*nFree
+            ⍝ Convert combo to base-limit representation
+            freeVals ← (nFree/limit)⊤combo
+
+            ⍝ Compute basic variables from free variables
+            solution ← nButtons⍴0
+            solution[freeCols] ← freeVals
+
+            ⍝ For each pivot row, compute the basic variable
+            valid ← 1
+            :For row :In ⍳nCounters
+                :If valid
+                    nonZero ← ⍸rref[row;⍳nButtons]≠0
+                    :If 0<≢nonZero
+                        pivotCol ← ⊃nonZero
+                        ⍝ Solve for basic variable
+                        rhs ← rref[row;nButtons]
+                        otherTerms ← +/solution×rref[row;⍳nButtons]
+                        basicVal ← rhs-otherTerms+solution[pivotCol]×rref[row;pivotCol]
+                        basicVal ← basicVal÷rref[row;pivotCol]
+
+                        ⍝ Check if valid (non-negative integer)
+                        :If (basicVal<0)∨(basicVal≠⌊basicVal)
+                            valid ← 0
+                        :Else
+                            solution[pivotCol] ← basicVal
+                        :EndIf
+                    :EndIf
+                :EndIf
+            :EndFor
+
+            ⍝ Verify solution and update minimum
+            :If valid
+                validCount ← validCount+1
+                result ← matrix+.×solution
+                :If result≡joltages
+                    matchCount ← matchCount+1
+                    sum ← +/solution
+                    :If sum<minSum
+                        minSum ← sum
+                    :EndIf
+                :EndIf
+            :EndIf
+        :EndFor
+        ⎕←'validCount: ',⍕validCount,' matchCount: ',⍕matchCount,' minSum: ',⍕minSum
+    :EndIf
+∇
+
+Part1 ← {+/SolvePart1¨ParseLine¨⍵}
+Part2 ← {+/SolvePart2¨ParseLine¨⍵}
+
+input ← ⊃⎕NGET '2025/data/inputs/10.txt' 1
+example ← ⊃⎕NGET '2025/data/examples/10.txt' 1
+
+⎕←'Example Part 1: ',⍕Part1 example ⍝ should be 7
+⎕←'Example Part 2: ',⍕Part2 example ⍝ should be 33
+⎕←'Part 1: ',⍕Part1 input ⍝ should be 477
+⎕←'Part 2: ',⍕Part2 input ⍝ should be 17970
